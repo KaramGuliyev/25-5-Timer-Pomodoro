@@ -4,6 +4,13 @@ function App() {
   const [sessionTime, setSessionTime] = React.useState(25 * 60);
   const [timerOn, setTimerOn] = React.useState(false);
   const [onBreak, setOnBreak] = React.useState(false);
+  const [breakAudio, setBreakAudio] = React.useState(new Audio("./alert.mp3"));
+
+  const playBreakSound = () => {
+    breakAudio.currentTime = 0;
+    breakAudio.play();
+  };
+
   const formatTime = (time) => {
     let minutes = Math.floor(time / 60);
     let seconds = time % 60;
@@ -37,19 +44,30 @@ function App() {
         date = new Date().getTime();
         if (date > nextDate) {
           setDisplayTime((prev) => {
+            if (prev <= 0 && !onBreakVariable) {
+              playBreakSound();
+              onBreakVariable = true;
+              setOnBreak(true);
+              return breakTime
+            } else if (prev <= 0 && onBreakVariable) {
+                playBreakSound();
+                onBreakVariable=false
+                setOnBreak(false)
+                return sessionTime;
+            }
             return prev - 1;
           });
           nextDate += second;
         }
       }, 30);
-      localStorage.clear()
-      localStorage.setItem('interval-id', interval)
+      localStorage.clear();
+      localStorage.setItem("interval-id", interval);
     }
 
-    if(timerOn) {
-        clearInterval(localStorage.getItem('interval-id'))
+    if (timerOn) {
+      clearInterval(localStorage.getItem("interval-id"));
     }
-    setTimerOn(!timerOn)
+    setTimerOn(!timerOn);
   };
 
   const resetTime = () => {
@@ -65,6 +83,9 @@ function App() {
         <Length title={"Break Length"} changeTime={changeTime} type={"break"} time={breakTime} formatTime={formatTime} />
         <Length title={"Session Length"} changeTime={changeTime} type={"session"} time={sessionTime} formatTime={formatTime} />
       </div>
+      <h3>
+        {onBreak ? "Break" : "Session"} 
+      </h3>
       <h1>{formatTime(displayTime)}</h1>
       <button className="btn-large deep-purple lighten-2" onClick={controlTime}>
         {timerOn ? <i className="material-icons">pause_circle_filled</i> : <i className="material-icons">play_circle_filled</i>}
